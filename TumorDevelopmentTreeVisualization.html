@@ -8,6 +8,44 @@
 	  <script src="https://cdn.rawgit.com/eligrey/FileSaver.js/e9d941381475b5df8b7d7691013401e171014e89/FileSaver.min.js"></script>
 	  <script src="https://d3js.org/d3.v3.min.js"></script>
     <style type="text/css">
+      .upload-btn-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+      }
+      .upload-btn-wrapper input[type=file] {
+        font-size: 30px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+      }
+
+      .button {
+        background-color: #4CAF50; /* Green */
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        -webkit-transition-duration: 0.4s; /* Safari */
+        transition-duration: 0.4s;
+        cursor: pointer;
+      }
+      
+      .button1 {
+          background-color: white; 
+          color: black; 
+          border: 2px solid #4CAF50;
+      }
+  
+      .button1:hover {
+          background-color: #4CAF50;
+          color: white;
+      }
       .node circle {
         cursor: pointer;
         fill: #fff;
@@ -27,17 +65,34 @@
     </style>
   </head>
   <body>
+    <h1>Tree Visualization Tool</h1>
+    <hr>
     <div id="body">
       <div id="footer">
-         d3.layout.tree
-        <div class="hint">click or option-click to expand or collapse</div>
+        <div class="hint"><strong>Tip: </strong>Click or option-click to expand or collapse</div>
         <div>
-          <button id='saveButton'>Export tree visualization to PNG</button>
+          <br>
+          width of canvas: <input type="range" min="1280" max="32767" value="2560" class="slider" id="widthOfCanvas"></input>
+          <br>
+          <div class="upload-btn-wrapper">
+            <button class="button button1">Upload a json file</button>
+            <input type="file" id="selectFiles" value="Import" text="Choose a json file"></iput>
+          </div>
+          <div class="upload-btn-wrapper">
+            <button class="button button1" id="import">Import and update</button>
+            <button class="button button1" id='saveButton'>Export tree to PNG</button>
+          </div>
+          <!--
+          <div>
+            <textarea id="result"></textarea>
+          </div>
+          -->
         </div>
     </div>
     <script type="text/javascript">
 
-var width =  1280;
+var importJson;
+var width = 2560;
 var height = 800;
 var m = [20, 120, 20, 120],
     w = width - m[1] - m[3],
@@ -55,10 +110,51 @@ var vis = d3.select("#body").append("svg")
     .attr("width", w + m[1] + m[3])
     .attr("height", h + m[0] + m[2]);
     
-//var chart=vis.append("g").attr("transform", "translate(" + m[3] + "," + m[0] + ")");
-var chart=vis.append("g").attr('transform',"translate(" + m[3] + "," + m[0] + ")");
+var chart=vis.append("g").attr('transform',"translate(" + 60 + "," + m[0] + ")");
 
-d3.json("ov4B_missense_and_census_gene_collapse_new.json", function(json) {
+document.getElementById('import').onclick = function() {
+  var files = document.getElementById('selectFiles').files;
+  console.log(files);
+  if (files.length <= 0) {
+    return false;
+  }
+
+  var fr = new FileReader();
+
+  fr.onload = function(e) { 
+  console.log(e);
+    var result = JSON.parse(e.target.result);
+    importJson=result;
+    //var formatted = JSON.stringify(result, null, 2);
+    //document.getElementById('result').value = formatted;
+    
+  }
+
+  fr.readAsText(files.item(0));
+  width = document.getElementById("widthOfCanvas").value;
+  d3.json("flare.json", function(json) {
+    root = importJson;
+    root.x0 = h / 2;
+    root.y0 = 0;
+  
+    function toggleAll(d) {
+      if (d.children) {
+        d.children.forEach(toggleAll);
+        toggle(d);
+      }
+    }
+  
+    // Initialize the display to show a few nodes.
+    //root.children.forEach(toggleAll);
+    //toggle(root.children[1]);
+    //toggle(root.children[1].children[2]);
+    //toggle(root.children[9]);
+    //toggle(root.children[9].children[0]);
+    update(root);
+  });
+};
+
+d3.json("ov4B_missense_and_census_gene_collapse.json", function(json) {
   root = json;
   root.x0 = h / 2;
   root.y0 = 0;
@@ -76,15 +172,13 @@ d3.json("ov4B_missense_and_census_gene_collapse_new.json", function(json) {
   //toggle(root.children[1].children[2]);
   //toggle(root.children[9]);
   //toggle(root.children[9].children[0]);
-
   update(root);
 });
-
 //////
-// Set-up the export button
+// Set-up the export 
 d3.select('#saveButton').on('click', function(){
 	var svgString = getSVGString(vis.node());
-	svgString2Image(svgString, 2*width, 2*height, 'png', save); // passes Blob and filesize String to the callback
+	svgString2Image(svgString, width, height, 'png', save); // passes Blob and filesize String to the callback
 
 	function save( dataBlob, filesize ){
 		saveAs( dataBlob, 'ov4B_missense_and_census_gene_collapse_new.png' ); // FileSaver.js function
@@ -240,6 +334,7 @@ function toggle(d) {
     d._children = null;
   }
 }
+
 </script>
 </body>
 </html>
