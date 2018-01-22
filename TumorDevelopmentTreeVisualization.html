@@ -72,7 +72,7 @@
         <div class="hint"><strong>Tip: </strong>Click or option-click to expand or collapse</div>
         <div>
           <br>
-          width of canvas: <input type="range" min="1280" max="32767" value="2560" class="slider" id="widthOfCanvas"></input>
+          width of canvas: <input type="range" min="1280" max="16383" value="2560" class="slider" id="widthOfCanvas"></input>
           <br>
           <div class="upload-btn-wrapper">
             <button class="button button1">Upload a json file</button>
@@ -92,7 +92,7 @@
     <script type="text/javascript">
 
 var importJson;
-var width = 2560;
+var width = document.getElementById("widthOfCanvas").value;;
 var height = 800;
 var m = [20, 120, 20, 120],
     w = width - m[1] - m[3],
@@ -131,7 +131,12 @@ document.getElementById('import').onclick = function() {
   }
 
   fr.readAsText(files.item(0));
+  d3.selectAll("svg > *").remove();
   width = document.getElementById("widthOfCanvas").value;
+  w = width - m[1] - m[3];
+  vis.attr("width",  w + m[1] + m[3]);  
+  chart=vis.append("g").attr('transform',"translate(" + 60 + "," + m[0] + ")");
+  
   d3.json("flare.json", function(json) {
     root = importJson;
     root.x0 = h / 2;
@@ -178,7 +183,8 @@ d3.json("ov4B_missense_and_census_gene_collapse.json", function(json) {
 // Set-up the export 
 d3.select('#saveButton').on('click', function(){
 	var svgString = getSVGString(vis.node());
-	svgString2Image(svgString, width, height, 'png', save); // passes Blob and filesize String to the callback
+	width =  document.getElementById("widthOfCanvas").value;
+	svgString2Image(svgString, 2*width, 2*height, 'png', save); // passes Blob and filesize String to the callback
 
 	function save( dataBlob, filesize ){
 		saveAs( dataBlob, 'ov4B_missense_and_census_gene_collapse_new.png' ); // FileSaver.js function
